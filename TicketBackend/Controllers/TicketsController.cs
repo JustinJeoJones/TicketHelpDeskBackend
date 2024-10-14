@@ -27,6 +27,24 @@ namespace TicketBackend.Controllers
             return await _context.Tickets.Include(t => t.Author).Include(t => t.Category).ToListAsync();
         }
 
+        [HttpGet("FavsByUser/{googleId}")]
+        public async Task<ActionResult<IEnumerable<Ticket>>> GetTicketsByUserFavs(string googleId)
+        {
+            // Fetch the list of TicketIds from Favorites
+            List<int?> ticketIds = await _context.Favorites.Where(f => f.UserId == googleId)
+                                            .Select(f => f.TicketId)
+                                            .ToListAsync();
+
+            // Query Tickets including Author and Category, filtering by TicketIds
+            List<Ticket> tickets = await _context.Tickets
+                                                .Include(t => t.Author)
+                                                .Include(t => t.Category)
+                                                .Where(t => ticketIds.Contains(t.Id))
+                                                .ToListAsync();
+
+            return tickets;
+        }
+
         // GET: api/Tickets/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Ticket>> GetTicket(int id)

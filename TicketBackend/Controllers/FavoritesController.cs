@@ -22,8 +22,12 @@ namespace TicketBackend.Controllers
 
         // GET: api/Favorites
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Favorite>>> GetFavorites()
+        public async Task<ActionResult<IEnumerable<Favorite>>> GetFavorites(string? googleId= null)
         {
+            if(googleId != null)
+            {
+                return await _context.Favorites.Where(f => f.UserId == googleId).ToListAsync();
+            }
             return await _context.Favorites.ToListAsync();
         }
 
@@ -77,6 +81,14 @@ namespace TicketBackend.Controllers
         [HttpPost]
         public async Task<ActionResult<Favorite>> PostFavorite(Favorite favorite)
         {
+            //if favorite exists, remove it
+            Favorite result = _context.Favorites.FirstOrDefault(e => e.UserId == favorite.UserId && e.TicketId == favorite.TicketId);
+            if (result != null)
+            {
+                _context.Favorites.Remove(result);
+                _context.SaveChanges();
+                return NoContent();
+            }
             _context.Favorites.Add(favorite);
             await _context.SaveChangesAsync();
 
